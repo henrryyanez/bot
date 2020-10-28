@@ -11,7 +11,25 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 #Solicitamos el TOKEN
+#TOKEN = os.getenv("TOKEN")
+mode = os.getenv("MODE")
 TOKEN = os.getenv("TOKEN")
+if mode == "dev":
+    def run(updater):
+        updater.start_polling()
+elif mode == "prod":
+    def run(updater):
+        PORT = int(os.environ.get("PORT", "8443"))
+        HEROKU_APP_NAME = os.environ.get("HEROKU_APP_NAME")
+        # Code from https://github.com/python-telegram-bot/python-telegram-bot/wiki/Webhooks#heroku
+        updater.start_webhook(listen="0.0.0.0",
+                              port=PORT,
+                              url_path=TOKEN)
+        updater.bot.set_webhook("https://{}.herokuapp.com/{}".format(HEROKU_APP_NAME, TOKEN))
+else:
+    logger.error("No especificó un MODO!")
+    sys.exit(1)
+
 
 
 def iniciar(update, context):
@@ -48,17 +66,19 @@ if __name__ == "__main__":
     my_bot = telegram.Bot(token = TOKEN)
     #print(my_bot.getMe())
 
-# Enlazamos nuestro updater con nuestro bot
-updater = Updater(my_bot.token, use_context=True)
+    # Enlazamos nuestro updater con nuestro bot
+    updater = Updater(my_bot.token, use_context=True)
 
-# Creamos un despachador
-dp = updater.dispatcher
+    # Creamos un despachador
+    dp = updater.dispatcher
 
-# Creamos los manejadores
-dp.add_handler(CommandHandler("iniciar", iniciar))
-dp.add_handler(CommandHandler("random", random_number))
-dp.add_handler(MessageHandler(Filters.text, echo))
+    # Creamos los manejadores
+    dp.add_handler(CommandHandler("iniciar", iniciar))
+    dp.add_handler(CommandHandler("random", random_number))
+    dp.add_handler(MessageHandler(Filters.text, echo))
 
-updater.start_polling()
-print("[*] BOT CARGADO")
-updater.idle() #Permite finalizar el bot con Ctrl + C
+    run(updater)
+
+    updater.start_polling()
+    print("[*] BOT CARGADO")
+    updater.idle() #Permite finalizar el bot con Ctrl + C
