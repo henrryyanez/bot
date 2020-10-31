@@ -2,7 +2,10 @@ import logging
 import os
 import telegram
 import random
+import re
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+#from helper import gsheet_helper
+
 
 #Configurar Logging
 logging.basicConfig(
@@ -36,6 +39,7 @@ def iniciar(update, context):
     """
     docstring
     """
+    print(update.message)
     logging.info(f"El usuario {update.effective_user['username']}, ha iniciado una conversación")
     name = update.effective_user['first_name']
     update.message.reply_text(f"Hola {name} yo soy tu bot.")
@@ -53,18 +57,19 @@ def echo(update, context):
     user_id = update.effective_user['id']
     logger.info(f"El usuario {user_id}, ha enviado un mensaje de texto.")
     text = update.message.text
-    context.bot.sendMessage(
-        chat_id = user_id,
-        parse_mode = "MarkdownV2",
-        text = f"*Escribiste:*\n_{text}_"
-    )
+    if re.search(r'^(Hola|hola|hi|Hi|Hello|hello)',text):
+        context.bot.sendMessage(
+            chat_id = user_id,
+            parse_mode = "MarkdownV2",
+            text = f"*Escribiste:*\n_{text}_ \n {update.effective_user['first_name']} gracias por saludar te recuerdo que tu ID de usuario es: {user_id}, así que es trackeable\.\.\. ;D"
+        )
         
 
 
 if __name__ == "__main__":
     # Obtenemos información del bot
     my_bot = telegram.Bot(token = TOKEN)
-    #print(my_bot.getMe())
+    print(my_bot.getMe())
 
     # Enlazamos nuestro updater con nuestro bot
     updater = Updater(my_bot.token, use_context=True)
